@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MD Atelier">
+  <rect width="512" height="512" rx="108" fill="#1b2430"/>
+  <path d="M112 148c0-19.9 16.1-36 36-36h216c19.9 0 36 16.1 36 36v216c0 19.9-16.1 36-36 36H148c-19.9 0-36-16.1-36-36V148Z" fill="#fffdf8"/>
+  <path d="M150 178h212v40H150v-40Zm0 72h108v36H150v-36Zm0 66h212v36H150v-36Z" fill="#1b2430"/>
+  <path d="M298 238h68l-34 54-34-54Z" fill="#0f766e"/>
+  <path d="M278 238h28l27 42 27-42h28v70h-30v-30l-20 30h-10l-20-30v30h-30v-70Z" fill="#0f766e"/>
+</svg>

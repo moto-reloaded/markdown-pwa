@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1b2430">
+    <title>MD Atelier</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand" aria-label="MD Atelier">
+          <img src="./assets/icon.svg" alt="" width="32" height="32">
+          <span>MD Atelier</span>
+        </div>
+
+        <nav class="toolbar" aria-label="Document actions">
+          <button class="icon-button" id="newButton" type="button" title="新規" aria-label="新規">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+          <button class="icon-button" id="openButton" type="button" title="開く" aria-label="開く">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V6.8c0-1 .8-1.8 1.8-1.8h4.1l2 2h6.3c1 0 1.8.8 1.8 1.8v10.7H4Z"></path><path d="M4 19.5 6.2 11h15L19 19.5H4Z"></path></svg>
+          </button>
+          <button class="icon-button" id="saveButton" type="button" title="保存" aria-label="保存">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path><path d="M17 21v-8H7v8M7 3v5h8"></path></svg>
+          </button>
+          <button class="icon-button" id="downloadButton" type="button" title="Markdown をダウンロード" aria-label="Markdown をダウンロード">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
+          </button>
+          <button class="icon-button" id="htmlButton" type="button" title="HTML を出力" aria-label="HTML を出力">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 9-4 3 4 3"></path><path d="m16 9 4 3-4 3"></path><path d="m14 4-4 16"></path></svg>
+          </button>
+        </nav>
+
+        <div class="view-switch" role="group" aria-label="View mode">
+          <button class="mode-button is-active" data-mode="split" type="button">分割</button>
+          <button class="mode-button" data-mode="edit" type="button">編集</button>
+          <button class="mode-button" data-mode="preview" type="button">表示</button>
+        </div>
+
+        <div class="topbar-end">
+          <button class="icon-button" id="themeButton" type="button" title="テーマ" aria-label="テーマ">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6.7 6.7 0 1 0 8.9 8.9A8 8 0 1 1 12 3Z"></path></svg>
+          </button>
+          <button class="install-button" id="installButton" type="button" hidden>Install</button>
+        </div>
+      </header>
+
+      <main class="workspace split-mode" id="workspace">
+        <section class="editor-pane" aria-label="Markdown editor">
+          <div class="pane-header">
+            <input id="documentTitle" class="title-input" aria-label="ファイル名" spellcheck="false" value="untitled.md">
+            <span id="saveState" class="save-state">保存済み</span>
+          </div>
+          <textarea id="editor" class="editor" spellcheck="false" aria-label="Markdown"></textarea>
+        </section>
+
+        <section class="preview-pane" aria-label="Preview">
+          <div class="pane-header preview-header">
+            <span>Preview</span>
+            <span id="documentStats" class="document-stats">0 words</span>
+          </div>
+          <article id="preview" class="markdown-body"></article>
+        </section>
+      </main>
+
+      <footer class="statusbar" aria-live="polite">
+        <span id="fileStatus">ローカル下書き</span>
+        <span id="syncStatus">Offline ready</span>
+      </footer>
+
+      <input id="fileInput" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+    </div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
