@@ -1,0 +1,14 @@
+{
+  "name": "md-atelier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/server.mjs",
+    "test:syntax": "node --check app.js && node --check sw.js && node --check scripts/server.mjs",
+    "test:smoke": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0"
+  }
+}

@@ -163,48 +163,47 @@ button {
 }
 
 .format-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+  padding: 4px 16px;
   background: color-mix(in srgb, var(--surface) 88%, var(--bg));
   border-bottom: 1px solid var(--border);
-  overflow-x: auto;
 }
 
 .format-group {
-  display: inline-flex;
+  min-width: 0;
+  display: flex;
   align-items: center;
-  gap: 5px;
-  flex: 0 0 auto;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
 .note-format-group {
-  padding-left: 10px;
-  border-left: 1px solid var(--border);
+  padding-top: 3px;
+  border-top: 1px solid var(--border);
 }
 
 .format-button,
 .profile-select {
-  min-height: 34px;
+  min-height: 26px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 7px;
   background: var(--surface-strong);
   color: var(--text);
 }
 
 .format-button {
-  min-width: 36px;
-  padding: 0 9px;
+  min-width: 31px;
+  padding: 0 7px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 750;
 }
 
 .profile-select {
-  padding: 0 28px 0 10px;
-  font-size: 13px;
+  padding: 0 26px 0 9px;
+  font-size: 12px;
 }
 
 .format-button:hover {
@@ -492,15 +491,24 @@ button {
 
 .statusbar {
   min-height: 34px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 6px 16px;
   border-top: 1px solid var(--border);
   background: var(--surface);
   color: var(--muted);
   font-size: 12px;
+}
+
+.statusbar > :last-child {
+  justify-self: end;
+}
+
+.copyright {
+  justify-self: center;
+  white-space: nowrap;
 }
 
 .drag-hover .editor-pane,
@@ -538,7 +546,6 @@ button {
   }
 
   .format-toolbar {
-    justify-content: flex-start;
     padding: 8px 10px;
   }
 
@@ -581,6 +588,11 @@ button {
 
   .statusbar {
     align-items: flex-start;
+    display: flex;
     flex-direction: column;
+  }
+
+  .copyright {
+    justify-self: start;
   }
 }
