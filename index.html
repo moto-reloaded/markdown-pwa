@@ -56,37 +56,39 @@
       </header>
 
       <section class="format-toolbar" aria-label="Markdown formatting">
-        <div class="format-group" role="group" aria-label="Basic Markdown">
-          <button class="format-button" data-command="bold" type="button" title="太字">B</button>
-          <button class="format-button" data-command="italic" type="button" title="斜体">I</button>
-          <button class="format-button" data-command="strike" type="button" title="取り消し線">S</button>
-          <button class="format-button" data-command="inline-code" type="button" title="インラインコード">`</button>
-          <button class="format-button" data-command="link" type="button" title="リンク">Link</button>
-          <button class="format-button" data-command="image" type="button" title="画像">Img</button>
-          <button class="format-button" data-command="h1" type="button" title="見出し1">H1</button>
-          <button class="format-button" data-command="h2" type="button" title="見出し2">H2</button>
-          <button class="format-button" data-command="h3" type="button" title="見出し3">H3</button>
-          <button class="format-button" data-command="bullet-list" type="button" title="箇条書き">List</button>
-          <button class="format-button" data-command="number-list" type="button" title="番号付きリスト">1.</button>
-          <button class="format-button" data-command="check-list" type="button" title="チェックリスト">Check</button>
-          <button class="format-button" data-command="quote" type="button" title="引用">Quote</button>
-          <button class="format-button" data-command="code-block" type="button" title="コードブロック">Code</button>
-          <button class="format-button" data-command="table" type="button" title="表">Table</button>
-          <button class="format-button" data-command="hr" type="button" title="区切り線">HR</button>
+        <div class="format-group format-mode-group" role="group" aria-label="Markdown profile">
+          <label class="profile-label" for="markdownProfile">書式</label>
+          <select id="markdownProfile" class="profile-select" aria-label="Markdown profile">
+            <option value="standard">標準 Markdown</option>
+            <option value="note">note.com</option>
+          </select>
         </div>
 
-        <div class="format-group note-format-group" role="group" aria-label="note.com Markdown">
-          <select id="markdownProfile" class="profile-select" aria-label="Markdown profile">
-            <option value="standard">標準</option>
-            <option value="note">note</option>
-          </select>
-          <button class="format-button" data-note-command="note-large-heading" type="button" title="note 大見出し">note大</button>
-          <button class="format-button" data-note-command="note-small-heading" type="button" title="note 小見出し">note小</button>
-          <button class="format-button" data-note-command="note-bold" type="button" title="note 太字">note太</button>
-          <button class="format-button" data-note-command="note-quote" type="button" title="note 引用">note引</button>
-          <button class="format-button" data-note-command="note-embed" type="button" title="note 埋め込みURL">Embed</button>
-          <button class="format-button" data-note-command="note-math-inline" type="button" title="note インライン数式">Math</button>
-          <button class="format-button" data-note-command="note-math-block" type="button" title="note 数式ブロック">$$</button>
+        <div class="format-group" role="group" aria-label="Text formatting">
+          <button class="format-button" data-command="bold" type="button" title="太字">太字</button>
+          <button class="format-button" data-command="italic" type="button" title="斜体">斜体</button>
+          <button class="format-button" data-command="strike" type="button" title="取り消し線">取消</button>
+          <button class="format-button" data-command="inline-code" type="button" title="インラインコード">コード</button>
+        </div>
+
+        <div class="format-group" role="group" aria-label="Structure formatting">
+          <button class="format-button" data-command="heading-large" type="button" title="大見出し">大見出し</button>
+          <button class="format-button" data-command="heading-medium" type="button" title="中見出し">中見出し</button>
+          <button class="format-button" data-command="heading-small" type="button" title="小見出し">小見出し</button>
+          <button class="format-button" data-command="bullet-list" type="button" title="箇条書き">箇条書き</button>
+          <button class="format-button" data-command="number-list" type="button" title="番号付きリスト">番号</button>
+          <button class="format-button" data-command="check-list" type="button" title="チェックリスト">チェック</button>
+          <button class="format-button" data-command="quote" type="button" title="引用">引用</button>
+        </div>
+
+        <div class="format-group" role="group" aria-label="Insert formatting">
+          <button class="format-button" data-command="link" type="button" title="リンク">リンク</button>
+          <button class="format-button" data-command="image" type="button" title="画像">画像</button>
+          <button class="format-button" data-command="table" type="button" title="表">表</button>
+          <button class="format-button" data-command="code-block" type="button" title="コードブロック">コード枠</button>
+          <button class="format-button" data-command="math-inline" type="button" title="インライン数式">数式</button>
+          <button class="format-button" data-command="embed" type="button" title="埋め込みURL">埋め込み</button>
+          <button class="format-button" data-command="hr" type="button" title="区切り線">区切り線</button>
         </div>
       </section>
 
@@ -141,7 +143,7 @@
       <footer class="statusbar" aria-live="polite">
         <span id="fileStatus">ローカル下書き</span>
         <span class="copyright">(C) VISIONAX LLC</span>
-        <span id="syncStatus">Offline ready</span>
+        <span><span id="syncStatus">Offline ready</span> / <span id="versionLabel">v1.0.0</span></span>
       </footer>
 
       <input id="fileInput" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>

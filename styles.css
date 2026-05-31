@@ -163,12 +163,13 @@ button {
 }
 
 .format-toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 3px;
-  padding: 4px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
   background: color-mix(in srgb, var(--surface) 88%, var(--bg));
   border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
 }
 
 .format-group {
@@ -177,11 +178,13 @@ button {
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
+  padding-right: 8px;
+  border-right: 1px solid var(--border);
 }
 
-.note-format-group {
-  padding-top: 3px;
-  border-top: 1px solid var(--border);
+.format-group:last-child {
+  border-right: 0;
+  padding-right: 0;
 }
 
 .format-button,
@@ -197,6 +200,12 @@ button {
   min-width: 31px;
   padding: 0 7px;
   cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.profile-label {
+  color: var(--muted);
   font-size: 12px;
   font-weight: 750;
 }
@@ -546,7 +555,8 @@ button {
   }
 
   .format-toolbar {
-    padding: 8px 10px;
+    gap: 6px;
+    padding: 6px 10px;
   }
 
   .translation-panel {
@@ -563,6 +573,69 @@ button {
   .editor,
   .markdown-body {
     min-height: 48vh;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    padding-bottom: 58px;
+  }
+
+  .view-switch {
+    position: fixed;
+    left: 50%;
+    right: auto;
+    bottom: 10px;
+    z-index: 30;
+    transform: translateX(-50%);
+    background: var(--surface);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 22%);
+  }
+
+  .format-toolbar {
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 7px 10px;
+    scrollbar-width: thin;
+    overscroll-behavior-x: contain;
+  }
+
+  .format-group {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    border-right: 1px solid var(--border);
+    border-bottom: 0;
+    padding: 0 8px 0 0;
+  }
+
+  .format-group:last-child {
+    border-right: 0;
+    padding-right: 0;
+  }
+
+  .format-button,
+  .profile-select {
+    min-height: 32px;
+  }
+
+  .format-button {
+    min-width: 36px;
+    padding: 0 8px;
+  }
+
+  .profile-label {
+    font-size: 11px;
+  }
+
+  .profile-select {
+    max-width: 142px;
+    padding-left: 8px;
+  }
+
+  .workspace {
+    gap: 10px;
   }
 }
 

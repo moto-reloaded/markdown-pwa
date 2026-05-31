@@ -1,6 +1,7 @@
 const STORAGE_KEY = "md-atelier-draft-v1";
 const THEME_KEY = "md-atelier-theme";
 const README_URL = "./README.md";
+const APP_VERSION = "1.0.0";
 const SAMPLE_MARKDOWN = `# Untitled
 
 小さく始められる Markdown エディタです。
@@ -37,6 +38,7 @@ const translateReplaceButton = document.querySelector("#translateReplaceButton")
 const translateDownloadButton = document.querySelector("#translateDownloadButton");
 const translateToggleButton = document.querySelector("#translateToggleButton");
 const markdownProfile = document.querySelector("#markdownProfile");
+const versionLabel = document.querySelector("#versionLabel");
 
 let fileHandle = null;
 let dirty = false;
@@ -45,10 +47,13 @@ let deferredInstallPrompt = null;
 init();
 
 async function init() {
+  versionLabel.textContent = `v${APP_VERSION}`;
   applyTheme(localStorage.getItem(THEME_KEY) || "light");
   await restoreDraft();
   render();
   wireEvents();
+  updateMarkdownProfile();
+  initializeResponsiveMode();
   updateBrowserCapabilities();
   registerServiceWorker();
 }
@@ -83,13 +88,14 @@ function wireEvents() {
   document.querySelectorAll("[data-command]").forEach((button) => {
     button.addEventListener("click", () => applyMarkdownCommand(button.dataset.command));
   });
-  document.querySelectorAll("[data-note-command]").forEach((button) => {
-    button.addEventListener("click", () => applyNoteCommand(button.dataset.noteCommand));
+  modeButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      workspace.dataset.userModeSelected = "true";
+      setMode(button.dataset.mode);
+    });
   });
 
-  modeButtons.forEach((button) => {
-    button.addEventListener("click", () => setMode(button.dataset.mode));
-  });
+  window.matchMedia("(max-width: 760px)").addEventListener("change", initializeResponsiveMode);
 
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
@@ -313,6 +319,7 @@ function setDirty(value) {
 }
 
 function setMode(mode) {
+  workspace.dataset.mode = mode;
   workspace.classList.remove("split-mode", "edit-mode", "preview-mode");
   workspace.classList.add(`${mode}-mode`);
   modeButtons.forEach((button) => {
@@ -385,11 +392,11 @@ function handleShortcuts(event) {
   }
   if (key === "b") {
     event.preventDefault();
-    wrapSelection("**", "**");
+    applyMarkdownCommand("bold");
   }
   if (key === "i") {
     event.preventDefault();
-    wrapSelection("*", "*");
+    applyMarkdownCommand("italic");
   }
   if (key === "k") {
     event.preventDefault();
@@ -398,41 +405,41 @@ function handleShortcuts(event) {
 }
 
 function applyMarkdownCommand(command) {
+  const profile = markdownProfile.value;
+  const headingPrefix = {
+    standard: {
+      "heading-large": "# ",
+      "heading-medium": "## ",
+      "heading-small": "### ",
+    },
+    note: {
+      "heading-large": "## ",
+      "heading-medium": "### ",
+      "heading-small": "#### ",
+    },
+  }[profile];
+
   const commands = {
-    bold: () => wrapSelection("**", "**", "太字"),
+    bold: () => (profile === "note" ? wrapSelection("__", "__", "太字") : wrapSelection("**", "**", "太字")),
     italic: () => wrapSelection("*", "*", "斜体"),
     strike: () => wrapSelection("~~", "~~", "取り消し"),
     "inline-code": () => wrapSelection("`", "`", "code"),
     link: () => wrapSelection("[", "](https://example.com)", "リンクテキスト"),
     image: () => insertBlock("![画像の説明](https://example.com/image.png)"),
-    h1: () => applyLinePrefix("# "),
-    h2: () => applyLinePrefix("## "),
-    h3: () => applyLinePrefix("### "),
+    "heading-large": () => applyLinePrefix(headingPrefix["heading-large"]),
+    "heading-medium": () => applyLinePrefix(headingPrefix["heading-medium"]),
+    "heading-small": () => applyLinePrefix(headingPrefix["heading-small"]),
     "bullet-list": () => applyLinePrefix("- "),
     "number-list": () => applyOrderedList(),
     "check-list": () => applyLinePrefix("- [ ] "),
     quote: () => applyLinePrefix("> "),
     "code-block": () => wrapBlock("```\n", "\n```", "ここにコード"),
     table: () => insertBlock("| 項目 | 内容 |\n| --- | --- |\n|  |  |"),
+    "math-inline": () => wrapSelection("$${", "}$$", "y = x^2"),
+    embed: () => insertBlock("https://note.com/"),
     hr: () => insertBlock("\n---\n"),
   };
 
-  commands[command]?.();
-}
-
-function applyNoteCommand(command) {
-  const commands = {
-    "note-large-heading": () => applyLinePrefix("## "),
-    "note-small-heading": () => applyLinePrefix("### "),
-    "note-bold": () => wrapSelection("__", "__ ", "太字"),
-    "note-quote": () => applyLinePrefix("> "),
-    "note-embed": () => insertBlock("https://note.com/"),
-    "note-math-inline": () => wrapSelection("$${", "}$$", "y = x^2"),
-    "note-math-block": () => insertBlock("$$\ny = x^2\n$$"),
-  };
-
-  markdownProfile.value = "note";
-  updateMarkdownProfile();
   commands[command]?.();
 }
 
@@ -501,9 +508,14 @@ function markEditorChanged() {
 }
 
 function updateMarkdownProfile() {
-  document.querySelectorAll("[data-note-command]").forEach((button) => {
-    button.classList.toggle("is-active", markdownProfile.value === "note");
-  });
+  document.documentElement.dataset.markdownProfile = markdownProfile.value;
+}
+
+function initializeResponsiveMode() {
+  const mobile = window.matchMedia("(max-width: 760px)").matches;
+  if (mobile && !workspace.dataset.userModeSelected) {
+    setMode("edit");
+  }
 }
 
 function toggleTranslationPanel() {

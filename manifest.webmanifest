@@ -1,6 +1,7 @@
 {
   "name": "MD Atelier",
   "short_name": "MD Atelier",
+  "version": "1.0.0",
   "description": "A small offline-first Markdown viewer and editor.",
   "start_url": "./index.html",
   "scope": "./",
