@@ -28,6 +28,13 @@ const workspace = document.querySelector("#workspace");
 const fileInput = document.querySelector("#fileInput");
 const installButton = document.querySelector("#installButton");
 const modeButtons = [...document.querySelectorAll(".mode-button")];
+const translationPanel = document.querySelector("#translationPanel");
+const translationStatus = document.querySelector("#translationStatus");
+const sourceLanguage = document.querySelector("#sourceLanguage");
+const targetLanguage = document.querySelector("#targetLanguage");
+const translateReplaceButton = document.querySelector("#translateReplaceButton");
+const translateDownloadButton = document.querySelector("#translateDownloadButton");
+const translateToggleButton = document.querySelector("#translateToggleButton");
 
 let fileHandle = null;
 let dirty = false;
@@ -40,6 +47,7 @@ function init() {
   restoreDraft();
   render();
   wireEvents();
+  updateBrowserCapabilities();
   registerServiceWorker();
 }
 
@@ -61,8 +69,13 @@ function wireEvents() {
   document.querySelector("#downloadButton").addEventListener("click", downloadMarkdown);
   document.querySelector("#htmlButton").addEventListener("click", downloadHtml);
   document.querySelector("#themeButton").addEventListener("click", toggleTheme);
+  translateToggleButton.addEventListener("click", toggleTranslationPanel);
+  translateReplaceButton.addEventListener("click", () => translateDocument("replace"));
+  translateDownloadButton.addEventListener("click", () => translateDocument("download"));
   installButton.addEventListener("click", installApp);
   fileInput.addEventListener("change", handleFileInput);
+  sourceLanguage.addEventListener("change", updateTranslationAvailability);
+  targetLanguage.addEventListener("change", updateTranslationAvailability);
 
   modeButtons.forEach((button) => {
     button.addEventListener("click", () => setMode(button.dataset.mode));
@@ -125,7 +138,7 @@ async function newDocument() {
 }
 
 async function openDocument() {
-  if ("showOpenFilePicker" in window) {
+  if (canOpenDirectly()) {
     try {
       const [handle] = await window.showOpenFilePicker({
         types: [
@@ -153,11 +166,9 @@ async function openDocument() {
 }
 
 async function saveDocument() {
-  if (fileHandle && "createWritable" in fileHandle) {
+  if (fileHandle && canWriteHandle(fileHandle)) {
     try {
-      const writable = await fileHandle.createWritable();
-      await writable.write(editor.value);
-      await writable.close();
+      await writeToFileHandle(fileHandle);
       setDirty(false);
       persistDraft();
       showTransientStatus("保存しました");
@@ -167,9 +178,44 @@ async function saveDocument() {
     }
   }
 
+  if ("showSaveFilePicker" in window) {
+    try {
+      fileHandle = await window.showSaveFilePicker({
+        suggestedName: normalizeFileName(titleInput.value || "untitled.md", ".md"),
+        types: [
+          {
+            description: "Markdown",
+            accept: {
+              "text/markdown": [".md", ".markdown"],
+              "text/plain": [".txt"],
+            },
+          },
+        ],
+      });
+      await writeToFileHandle(fileHandle);
+      fileStatus.textContent = "直接保存できます";
+      setDirty(false);
+      persistDraft();
+      updateBrowserCapabilities();
+      showTransientStatus("保存しました");
+      return;
+    } catch (error) {
+      if (error.name === "AbortError") {
+        return;
+      }
+      showTransientStatus("保存できませんでした");
+    }
+  }
+
   downloadMarkdown();
   setDirty(false);
   persistDraft();
+}
+
+async function writeToFileHandle(handle) {
+  const writable = await handle.createWritable();
+  await writable.write(editor.value);
+  await writable.close();
 }
 
 function downloadMarkdown() {
@@ -218,10 +264,11 @@ async function loadFile(file, handle) {
   fileHandle = handle;
   titleInput.value = file.name || "untitled.md";
   editor.value = content;
-  fileStatus.textContent = handle ? "直接保存できます" : "ダウンロード保存";
+  fileStatus.textContent = handle && canWriteHandle(handle) ? "直接保存できます" : "ダウンロード保存";
   setDirty(false);
   persistDraft();
   render();
+  updateBrowserCapabilities();
 }
 
 function setDirty(value) {
@@ -246,6 +293,33 @@ function toggleTheme() {
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   localStorage.setItem(THEME_KEY, theme);
+}
+
+function canOpenDirectly() {
+  return "showOpenFilePicker" in window;
+}
+
+function canSaveDirectly() {
+  return "showSaveFilePicker" in window || (fileHandle && canWriteHandle(fileHandle));
+}
+
+function canWriteHandle(handle) {
+  return Boolean(handle && "createWritable" in handle);
+}
+
+function updateBrowserCapabilities() {
+  const saveTitle = canSaveDirectly() ? "上書き保存" : "ダウンロード保存";
+  const openTitle = canOpenDirectly() ? "開く" : "ファイルを選択";
+  document.querySelector("#saveButton").title = saveTitle;
+  document.querySelector("#saveButton").setAttribute("aria-label", saveTitle);
+  document.querySelector("#openButton").title = openTitle;
+  document.querySelector("#openButton").setAttribute("aria-label", openTitle);
+
+  if (!fileHandle) {
+    fileStatus.textContent = canSaveDirectly() ? "直接保存対応" : "ダウンロード保存";
+  }
+
+  updateTranslationAvailability();
 }
 
 async function installApp() {
@@ -293,6 +367,274 @@ function wrapSelection(before, after) {
   persistDraft();
   render();
   editor.focus();
+}
+
+function toggleTranslationPanel() {
+  translationPanel.hidden = !translationPanel.hidden;
+  translateToggleButton.classList.toggle("is-active", !translationPanel.hidden);
+  if (!translationPanel.hidden) {
+    updateTranslationAvailability();
+  }
+}
+
+async function updateTranslationAvailability() {
+  const translator = getTranslatorConstructor();
+  const sameLanguage = sourceLanguage.value === targetLanguage.value;
+  translateReplaceButton.disabled = sameLanguage || !translator;
+  translateDownloadButton.disabled = sameLanguage || !translator;
+
+  if (sameLanguage) {
+    translationStatus.textContent = "翻訳元と翻訳先が同じです";
+    return;
+  }
+
+  if (!translator) {
+    translationStatus.textContent = "このブラウザでは内蔵翻訳を利用できません";
+    return;
+  }
+
+  try {
+    const availability = await getTranslatorAvailability(sourceLanguage.value, targetLanguage.value);
+    translationStatus.textContent = getTranslationAvailabilityMessage(availability);
+  } catch {
+    translationStatus.textContent = "翻訳機能の確認に失敗しました";
+  }
+}
+
+async function translateDocument(mode) {
+  if (sourceLanguage.value === targetLanguage.value) {
+    showTransientStatus("翻訳元と翻訳先が同じです");
+    return;
+  }
+
+  if (!getTranslatorConstructor()) {
+    translationStatus.textContent = "Chrome / Edge の内蔵翻訳が必要です";
+    return;
+  }
+
+  setTranslationBusy(true);
+  const originalStatus = translationStatus.textContent;
+  translationStatus.textContent = "翻訳中...";
+
+  try {
+    const translator = await createTranslator(sourceLanguage.value, targetLanguage.value);
+    const translated = await translateMarkdown(editor.value, translator);
+
+    if (typeof translator.destroy === "function") {
+      translator.destroy();
+    }
+
+    if (mode === "replace") {
+      editor.value = translated;
+      titleInput.value = withLanguageSuffix(titleInput.value, targetLanguage.value);
+      setDirty(true);
+      persistDraft();
+      render();
+      translationStatus.textContent = "翻訳しました";
+      return;
+    }
+
+    const fileName = withLanguageSuffix(titleInput.value || "untitled.md", targetLanguage.value);
+    downloadBlob(new Blob([translated], { type: "text/markdown;charset=utf-8" }), normalizeFileName(fileName, ".md"));
+    translationStatus.textContent = "翻訳版を保存しました";
+  } catch (error) {
+    translationStatus.textContent = getTranslationErrorMessage(error);
+  } finally {
+    setTranslationBusy(false);
+    if (translationStatus.textContent === "翻訳中...") {
+      translationStatus.textContent = originalStatus;
+    }
+  }
+}
+
+function getTranslatorConstructor() {
+  return globalThis.Translator || null;
+}
+
+async function getTranslatorAvailability(source, target) {
+  const translator = getTranslatorConstructor();
+  if (!translator || typeof translator.availability !== "function") {
+    return "unavailable";
+  }
+  return translator.availability({ sourceLanguage: source, targetLanguage: target });
+}
+
+async function createTranslator(source, target) {
+  const translator = getTranslatorConstructor();
+  return translator.create({
+    sourceLanguage: source,
+    targetLanguage: target,
+    monitor(monitor) {
+      monitor.addEventListener("downloadprogress", (event) => {
+        if (event.total) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          translationStatus.textContent = `翻訳モデルを準備中 ${percent}%`;
+        }
+      });
+    },
+  });
+}
+
+async function translateMarkdown(markdown, translator) {
+  const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
+  const translated = [];
+  let index = 0;
+  let inFence = false;
+  let fenceMarker = "";
+
+  while (index < lines.length) {
+    const line = lines[index];
+    const fence = line.match(/^\s*(```+|~~~+)/);
+
+    if (fence && !inFence) {
+      inFence = true;
+      fenceMarker = fence[1][0];
+      translated.push(line);
+      index += 1;
+      continue;
+    }
+
+    if (inFence) {
+      translated.push(line);
+      if (new RegExp(`^\\s*${fenceMarker}{3,}`).test(line)) {
+        inFence = false;
+      }
+      index += 1;
+      continue;
+    }
+
+    if (!line.trim()) {
+      translated.push(line);
+      index += 1;
+      continue;
+    }
+
+    if (isTableDelimiter(line)) {
+      translated.push(line);
+      index += 1;
+      continue;
+    }
+
+    const paragraph = [];
+    while (
+      index < lines.length &&
+      lines[index].trim() &&
+      !/^\s*(```+|~~~+)/.test(lines[index]) &&
+      !isTableDelimiter(lines[index])
+    ) {
+      paragraph.push(lines[index]);
+      index += 1;
+    }
+
+    const translatedParagraph = [];
+    for (const paragraphLine of paragraph) {
+      translatedParagraph.push(await translateMarkdownLine(paragraphLine, translator));
+    }
+    translated.push(...translatedParagraph);
+  }
+
+  return translated.join("\n");
+}
+
+async function translateMarkdownLine(line, translator) {
+  if (/^\s*\|/.test(line) || /\|\s*$/.test(line)) {
+    return translateTableLine(line, translator);
+  }
+
+  const heading = line.match(/^(\s*#{1,6}\s+)(.*?)(\s*#*)$/);
+  if (heading) {
+    return `${heading[1]}${await translateInlineText(heading[2], translator)}${heading[3]}`;
+  }
+
+  const list = line.match(/^(\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?)(.*)$/);
+  if (list) {
+    return `${list[1]}${await translateInlineText(list[2], translator)}`;
+  }
+
+  const quote = line.match(/^(\s{0,3}>\s?)(.*)$/);
+  if (quote) {
+    return `${quote[1]}${await translateInlineText(quote[2], translator)}`;
+  }
+
+  return translateInlineText(line, translator);
+}
+
+async function translateTableLine(line, translator) {
+  const startsWithPipe = line.trimStart().startsWith("|");
+  const endsWithPipe = line.trimEnd().endsWith("|");
+  const cells = line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|");
+  const translatedCells = [];
+
+  for (const cell of cells) {
+    const left = cell.match(/^\s*/)[0];
+    const right = cell.match(/\s*$/)[0];
+    translatedCells.push(`${left}${await translateInlineText(cell.trim(), translator)}${right}`);
+  }
+
+  return `${startsWithPipe ? "|" : ""}${translatedCells.join("|")}${endsWithPipe ? "|" : ""}`;
+}
+
+async function translateInlineText(text, translator) {
+  if (!text.trim()) {
+    return text;
+  }
+
+  const placeholders = [];
+  const protectedText = text.replace(/(`[^`]+`|!\[[^\]]*]\([^)]+\)|\[[^\]]+]\([^)]+\)|https?:\/\/\S+)/g, (match) => {
+    const id = placeholders.length;
+    placeholders.push(match);
+    return `[[MD_ATELIER_${id}]]`;
+  });
+
+  const translated = await translator.translate(protectedText);
+  return placeholders.reduce(
+    (value, replacement, id) => value.replaceAll(`[[MD_ATELIER_${id}]]`, replacement),
+    translated,
+  );
+}
+
+function isTableDelimiter(line) {
+  return /^\s*\|?[\s:-]+\|[\s|:-]+\|?\s*$/.test(line);
+}
+
+function setTranslationBusy(isBusy) {
+  sourceLanguage.disabled = isBusy;
+  targetLanguage.disabled = isBusy;
+  translateReplaceButton.disabled = isBusy;
+  translateDownloadButton.disabled = isBusy;
+}
+
+function getTranslationAvailabilityMessage(availability) {
+  if (availability === "available") {
+    return "内蔵翻訳を利用できます";
+  }
+  if (availability === "downloadable") {
+    return "初回翻訳時にモデルをダウンロードします";
+  }
+  if (availability === "downloading") {
+    return "翻訳モデルを準備中です";
+  }
+  return "この言語ペアは利用できません";
+}
+
+function getTranslationErrorMessage(error) {
+  if (error?.name === "NotAllowedError") {
+    return "ブラウザ設定で翻訳が許可されていません";
+  }
+  if (error?.name === "AbortError") {
+    return "翻訳を中止しました";
+  }
+  return "翻訳できませんでした";
+}
+
+function withLanguageSuffix(fileName, language) {
+  const label = language || targetLanguage.value;
+  const normalized = normalizeFileName(fileName || "untitled.md", ".md");
+  return normalized.replace(/\.(md|markdown|txt)$/i, `.${label}.md`);
 }
 
 function handleDragOver(event) {

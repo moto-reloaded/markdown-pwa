@@ -33,6 +33,9 @@
           <button class="icon-button" id="htmlButton" type="button" title="HTML を出力" aria-label="HTML を出力">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 9-4 3 4 3"></path><path d="m16 9 4 3-4 3"></path><path d="m14 4-4 16"></path></svg>
           </button>
+          <button class="icon-button" id="translateToggleButton" type="button" title="翻訳" aria-label="翻訳">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 8 6 6"></path><path d="m4 14 6-6 2-3"></path><path d="M2 5h12"></path><path d="M7 2h1"></path><path d="m22 22-5-10-5 10"></path><path d="M14 18h6"></path></svg>
+          </button>
         </nav>
 
         <div class="view-switch" role="group" aria-label="View mode">
@@ -48,6 +51,36 @@
           <button class="install-button" id="installButton" type="button" hidden>Install</button>
         </div>
       </header>
+
+      <section class="translation-panel" id="translationPanel" aria-label="Markdown translation" hidden>
+        <div class="translation-controls">
+          <label class="field-label" for="sourceLanguage">From</label>
+          <select id="sourceLanguage" class="select-input">
+            <option value="ja">日本語</option>
+            <option value="en">English</option>
+            <option value="zh-Hans">中文</option>
+            <option value="ko">한국어</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+          </select>
+
+          <label class="field-label" for="targetLanguage">To</label>
+          <select id="targetLanguage" class="select-input">
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+            <option value="zh-Hans">中文</option>
+            <option value="ko">한국어</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+          </select>
+
+          <button class="text-button" id="translateReplaceButton" type="button">置換</button>
+          <button class="text-button" id="translateDownloadButton" type="button">翻訳版を保存</button>
+        </div>
+        <span class="translation-status" id="translationStatus">Translator API を確認中</span>
+      </section>
 
       <main class="workspace split-mode" id="workspace">
         <section class="editor-pane" aria-label="Markdown editor">

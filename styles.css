@@ -61,7 +61,7 @@ button {
 .app-shell {
   min-height: 100%;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto;
 }
 
 .topbar {
@@ -160,6 +160,64 @@ button {
   padding: 0 14px;
   border-radius: 8px;
   font-weight: 700;
+}
+
+.translation-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.translation-panel[hidden] {
+  display: none;
+}
+
+.translation-controls {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.field-label,
+.translation-status {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.select-input,
+.text-button {
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.select-input {
+  padding: 0 34px 0 10px;
+}
+
+.text-button {
+  padding: 0 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.text-button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.text-button:disabled,
+.select-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .workspace {
@@ -405,6 +463,12 @@ button {
 
   .workspace {
     grid-template-columns: minmax(0, 1fr);
+    padding: 10px;
+  }
+
+  .translation-panel {
+    align-items: flex-start;
+    flex-direction: column;
     padding: 10px;
   }
 
