@@ -4,7 +4,7 @@ test("loads README and compact two-row toolbar", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.locator("#documentTitle")).toHaveValue("README.md");
-  await expect(page.locator("#editor")).toHaveValue(/アプリの入手先/);
+  await expect(page.locator("#editor")).toHaveValue(/## 入手先/);
   await expect(page.locator("#helpButton")).toHaveAttribute("aria-label", "README を開く");
 
   const toolbarBox = await page.locator(".format-toolbar").boundingBox();
