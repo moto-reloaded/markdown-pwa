@@ -6,7 +6,8 @@ test("loads README and compact two-row toolbar", async ({ page }) => {
   await expect(page.locator("#documentTitle")).toHaveValue("README.md");
   await expect(page.locator("#editor")).toHaveValue(/## 入手先/);
   await expect(page.locator("#helpButton")).toHaveAttribute("aria-label", "README を開く");
-  await expect(page.locator("#versionLabel")).toHaveText("v1.0.0");
+  await expect(page.locator("#versionLabel")).toHaveText("v1.0.1");
+  await expect(page.locator("#speechPanel")).toBeHidden();
 
   const toolbarBox = await page.locator(".format-toolbar").boundingBox();
   const firstButtonBox = await page.locator(".format-button").first().boundingBox();
@@ -47,4 +48,51 @@ test("mobile layout starts in edit mode with fixed view switch", async ({ page }
   const toolbarOverflow = await page.locator(".format-toolbar").evaluate((node) => node.scrollWidth > node.clientWidth);
   expect(toolbarBox.height).toBeLessThanOrEqual(52);
   expect(toolbarOverflow).toBe(true);
+});
+
+test("speech input inserts recognized text when supported", async ({ page }) => {
+  await page.addInitScript(() => {
+    class MockSpeechRecognition extends EventTarget {
+      start() {
+        this.dispatchEvent(new Event("start"));
+        setTimeout(() => {
+          const event = new Event("result");
+          Object.defineProperty(event, "resultIndex", { value: 0 });
+          Object.defineProperty(event, "results", { value: {
+            0: {
+              0: { transcript: "音声テスト" },
+              isFinal: true,
+            },
+            length: 1,
+          } });
+          this.dispatchEvent(event);
+          this.dispatchEvent(new Event("end"));
+        }, 0);
+      }
+
+      stop() {
+        this.dispatchEvent(new Event("end"));
+      }
+    }
+
+    Object.defineProperty(window, "SpeechRecognition", { configurable: true, value: MockSpeechRecognition });
+    Object.defineProperty(window, "webkitSpeechRecognition", { configurable: true, value: MockSpeechRecognition });
+  });
+
+  await page.goto("/");
+  await expect(page.locator("#speechToggleButton")).toBeVisible();
+
+  await page.locator("#editor").fill("# Voice\n\n");
+  await page.locator("#editor").focus();
+  await page.locator("#editor").evaluate((node) => {
+    node.selectionStart = node.value.length;
+    node.selectionEnd = node.value.length;
+  });
+
+  await page.locator("#speechToggleButton").click();
+  await expect(page.locator("#speechPanel")).toBeVisible();
+  await page.locator("#speechStartButton").click();
+
+  await expect(page.locator("#editor")).toHaveValue("# Voice\n\n音声テスト");
+  await expect(page.locator("#saveState")).toHaveText("未保存");
 });

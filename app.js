@@ -1,7 +1,7 @@
 const STORAGE_KEY = "md-atelier-draft-v1";
 const THEME_KEY = "md-atelier-theme";
 const README_URL = "./README.md";
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.0.1";
 const SAMPLE_MARKDOWN = `# Untitled
 
 小さく始められる Markdown エディタです。
@@ -37,12 +37,20 @@ const targetLanguage = document.querySelector("#targetLanguage");
 const translateReplaceButton = document.querySelector("#translateReplaceButton");
 const translateDownloadButton = document.querySelector("#translateDownloadButton");
 const translateToggleButton = document.querySelector("#translateToggleButton");
+const speechToggleButton = document.querySelector("#speechToggleButton");
+const speechPanel = document.querySelector("#speechPanel");
+const speechLanguage = document.querySelector("#speechLanguage");
+const speechStartButton = document.querySelector("#speechStartButton");
+const speechStopButton = document.querySelector("#speechStopButton");
+const speechStatus = document.querySelector("#speechStatus");
 const markdownProfile = document.querySelector("#markdownProfile");
 const versionLabel = document.querySelector("#versionLabel");
 
 let fileHandle = null;
 let dirty = false;
 let deferredInstallPrompt = null;
+let speechRecognition = null;
+let speechListening = false;
 
 init();
 
@@ -80,6 +88,9 @@ function wireEvents() {
   translateToggleButton.addEventListener("click", toggleTranslationPanel);
   translateReplaceButton.addEventListener("click", () => translateDocument("replace"));
   translateDownloadButton.addEventListener("click", () => translateDocument("download"));
+  speechToggleButton.addEventListener("click", toggleSpeechPanel);
+  speechStartButton.addEventListener("click", startSpeechInput);
+  speechStopButton.addEventListener("click", stopSpeechInput);
   installButton.addEventListener("click", installApp);
   fileInput.addEventListener("change", handleFileInput);
   sourceLanguage.addEventListener("change", updateTranslationAvailability);
@@ -362,6 +373,7 @@ function updateBrowserCapabilities() {
   }
 
   updateTranslationAvailability();
+  updateSpeechAvailability();
 }
 
 async function installApp() {
@@ -516,6 +528,138 @@ function initializeResponsiveMode() {
   if (mobile && !workspace.dataset.userModeSelected) {
     setMode("edit");
   }
+}
+
+function toggleSpeechPanel() {
+  speechPanel.hidden = !speechPanel.hidden;
+  speechToggleButton.classList.toggle("is-active", !speechPanel.hidden);
+  if (!speechPanel.hidden) {
+    updateSpeechAvailability();
+  } else {
+    stopSpeechInput();
+  }
+}
+
+function updateSpeechAvailability() {
+  const supported = Boolean(getSpeechRecognitionConstructor());
+  speechToggleButton.hidden = !supported;
+  speechStartButton.disabled = !supported || speechListening;
+  speechStopButton.disabled = !speechListening;
+
+  if (!supported) {
+    speechPanel.hidden = true;
+    speechToggleButton.classList.remove("is-active");
+    speechStatus.textContent = "このブラウザでは音声入力を利用できません";
+    return;
+  }
+
+  if (!speechListening && speechStatus.textContent === "音声入力中...") {
+    speechStatus.textContent = "待機中";
+  }
+}
+
+function getSpeechRecognitionConstructor() {
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+function startSpeechInput() {
+  const SpeechRecognition = getSpeechRecognitionConstructor();
+  if (!SpeechRecognition) {
+    updateSpeechAvailability();
+    return;
+  }
+
+  stopSpeechInput();
+  speechRecognition = new SpeechRecognition();
+  speechRecognition.lang = speechLanguage.value;
+  speechRecognition.continuous = true;
+  speechRecognition.interimResults = false;
+
+  speechRecognition.addEventListener("start", () => {
+    speechListening = true;
+    speechStatus.textContent = "音声入力中...";
+    updateSpeechAvailability();
+  });
+
+  speechRecognition.addEventListener("result", handleSpeechResult);
+  speechRecognition.addEventListener("error", handleSpeechError);
+  speechRecognition.addEventListener("end", () => {
+    speechListening = false;
+    speechRecognition = null;
+    if (speechStatus.textContent === "音声入力中...") {
+      speechStatus.textContent = "停止しました";
+    }
+    updateSpeechAvailability();
+  });
+
+  try {
+    editor.focus();
+    speechRecognition.start();
+  } catch {
+    speechStatus.textContent = "音声入力を開始できませんでした";
+    speechRecognition = null;
+    speechListening = false;
+    updateSpeechAvailability();
+  }
+}
+
+function stopSpeechInput() {
+  if (!speechRecognition) {
+    speechListening = false;
+    updateSpeechAvailability();
+    return;
+  }
+
+  try {
+    speechRecognition.stop();
+  } catch {
+    speechRecognition = null;
+    speechListening = false;
+    updateSpeechAvailability();
+  }
+}
+
+function handleSpeechResult(event) {
+  let transcript = "";
+  for (let index = event.resultIndex; index < event.results.length; index += 1) {
+    const result = event.results[index];
+    if (result.isFinal && result[0]?.transcript) {
+      transcript += result[0].transcript;
+    }
+  }
+
+  if (!transcript.trim()) {
+    return;
+  }
+
+  insertSpeechText(transcript);
+  speechStatus.textContent = "入力しました";
+}
+
+function handleSpeechError(event) {
+  speechListening = false;
+  speechStatus.textContent = getSpeechErrorMessage(event.error);
+  updateSpeechAvailability();
+}
+
+function insertSpeechText(text) {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  editor.setRangeText(text, start, end, "end");
+  markEditorChanged();
+}
+
+function getSpeechErrorMessage(error) {
+  if (error === "not-allowed" || error === "service-not-allowed") {
+    return "マイクの利用が許可されていません";
+  }
+  if (error === "no-speech") {
+    return "音声を認識できませんでした";
+  }
+  if (error === "audio-capture") {
+    return "マイクを利用できません";
+  }
+  return "音声入力に失敗しました";
 }
 
 function toggleTranslationPanel() {

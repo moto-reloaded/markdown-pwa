@@ -226,7 +226,8 @@ button {
   background: var(--accent-strong);
 }
 
-.translation-panel {
+.translation-panel,
+.speech-panel {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -236,11 +237,13 @@ button {
   border-bottom: 1px solid var(--border);
 }
 
-.translation-panel[hidden] {
+.translation-panel[hidden],
+.speech-panel[hidden] {
   display: none;
 }
 
-.translation-controls {
+.translation-controls,
+.speech-controls {
   min-width: 0;
   display: flex;
   align-items: center;
@@ -249,7 +252,8 @@ button {
 }
 
 .field-label,
-.translation-status {
+.translation-status,
+.speech-status {
   color: var(--muted);
   font-size: 12px;
 }
@@ -559,7 +563,8 @@ button {
     padding: 6px 10px;
   }
 
-  .translation-panel {
+  .translation-panel,
+  .speech-panel {
     align-items: flex-start;
     flex-direction: column;
     padding: 10px;
