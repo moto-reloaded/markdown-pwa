@@ -9,6 +9,8 @@ MD Atelier は、Markdown を知らない人でもボタン操作で記事を書
 
 Chrome / Edge では、アプリを開いてアドレスバー付近のインストールボタン、またはブラウザメニューの「アプリをインストール」から追加できます。Safari では macOS Sonoma 以降の「Dock に追加」を使えます。
 
+Mac で Safari を標準ブラウザにしている場合でも、Chrome でこのアプリを開いてインストールすれば、MD Atelier だけを Chrome 管理のアプリとして起動できます。普段のリンクは Safari、MD Atelier は Chrome、という使い分けができます。
+
 ## 最初にすること
 
 1. アプリを開きます。
