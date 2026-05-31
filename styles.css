@@ -61,7 +61,7 @@ button {
 .app-shell {
   min-height: 100%;
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto auto 1fr auto;
 }
 
 .topbar {
@@ -160,6 +160,62 @@ button {
   padding: 0 14px;
   border-radius: 8px;
   font-weight: 700;
+}
+
+.format-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 16px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.format-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+.note-format-group {
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+}
+
+.format-button,
+.profile-select {
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.format-button {
+  min-width: 36px;
+  padding: 0 9px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.profile-select {
+  padding: 0 28px 0 10px;
+  font-size: 13px;
+}
+
+.format-button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.format-button.is-active {
+  color: var(--surface-strong);
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
 }
 
 .translation-panel {
@@ -381,6 +437,21 @@ button {
   color: inherit;
 }
 
+.math-inline {
+  display: inline-block;
+  padding: 0.08em 0.36em;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent-soft) 58%, transparent);
+  color: var(--accent-strong);
+  font-family: "Cambria Math", "Times New Roman", serif;
+}
+
+.markdown-body .math-block {
+  background: color-mix(in srgb, var(--accent-soft) 50%, var(--surface-strong));
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
 .markdown-body table {
   width: 100%;
   border-collapse: collapse;
@@ -464,6 +535,11 @@ button {
   .workspace {
     grid-template-columns: minmax(0, 1fr);
     padding: 10px;
+  }
+
+  .format-toolbar {
+    justify-content: flex-start;
+    padding: 8px 10px;
   }
 
   .translation-panel {

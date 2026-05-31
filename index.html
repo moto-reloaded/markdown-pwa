@@ -45,12 +45,50 @@
         </div>
 
         <div class="topbar-end">
+          <button class="icon-button" id="helpButton" type="button" title="README を開く" aria-label="README を開く">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.1 9a3 3 0 1 1 5.8 1c-.6 1.7-2.9 1.5-2.9 3.7"></path><path d="M12 17h.01"></path><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"></path></svg>
+          </button>
           <button class="icon-button" id="themeButton" type="button" title="テーマ" aria-label="テーマ">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6.7 6.7 0 1 0 8.9 8.9A8 8 0 1 1 12 3Z"></path></svg>
           </button>
           <button class="install-button" id="installButton" type="button" hidden>Install</button>
         </div>
       </header>
+
+      <section class="format-toolbar" aria-label="Markdown formatting">
+        <div class="format-group" role="group" aria-label="Basic Markdown">
+          <button class="format-button" data-command="bold" type="button" title="太字">B</button>
+          <button class="format-button" data-command="italic" type="button" title="斜体">I</button>
+          <button class="format-button" data-command="strike" type="button" title="取り消し線">S</button>
+          <button class="format-button" data-command="inline-code" type="button" title="インラインコード">`</button>
+          <button class="format-button" data-command="link" type="button" title="リンク">Link</button>
+          <button class="format-button" data-command="image" type="button" title="画像">Img</button>
+          <button class="format-button" data-command="h1" type="button" title="見出し1">H1</button>
+          <button class="format-button" data-command="h2" type="button" title="見出し2">H2</button>
+          <button class="format-button" data-command="h3" type="button" title="見出し3">H3</button>
+          <button class="format-button" data-command="bullet-list" type="button" title="箇条書き">List</button>
+          <button class="format-button" data-command="number-list" type="button" title="番号付きリスト">1.</button>
+          <button class="format-button" data-command="check-list" type="button" title="チェックリスト">Check</button>
+          <button class="format-button" data-command="quote" type="button" title="引用">Quote</button>
+          <button class="format-button" data-command="code-block" type="button" title="コードブロック">Code</button>
+          <button class="format-button" data-command="table" type="button" title="表">Table</button>
+          <button class="format-button" data-command="hr" type="button" title="区切り線">HR</button>
+        </div>
+
+        <div class="format-group note-format-group" role="group" aria-label="note.com Markdown">
+          <select id="markdownProfile" class="profile-select" aria-label="Markdown profile">
+            <option value="standard">標準</option>
+            <option value="note">note</option>
+          </select>
+          <button class="format-button" data-note-command="note-large-heading" type="button" title="note 大見出し">note大</button>
+          <button class="format-button" data-note-command="note-small-heading" type="button" title="note 小見出し">note小</button>
+          <button class="format-button" data-note-command="note-bold" type="button" title="note 太字">note太</button>
+          <button class="format-button" data-note-command="note-quote" type="button" title="note 引用">note引</button>
+          <button class="format-button" data-note-command="note-embed" type="button" title="note 埋め込みURL">Embed</button>
+          <button class="format-button" data-note-command="note-math-inline" type="button" title="note インライン数式">Math</button>
+          <button class="format-button" data-note-command="note-math-block" type="button" title="note 数式ブロック">$$</button>
+        </div>
+      </section>
 
       <section class="translation-panel" id="translationPanel" aria-label="Markdown translation" hidden>
         <div class="translation-controls">

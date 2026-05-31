@@ -1,5 +1,6 @@
 const STORAGE_KEY = "md-atelier-draft-v1";
 const THEME_KEY = "md-atelier-theme";
+const README_URL = "./README.md";
 const SAMPLE_MARKDOWN = `# Untitled
 
 小さく始められる Markdown エディタです。
@@ -35,6 +36,7 @@ const targetLanguage = document.querySelector("#targetLanguage");
 const translateReplaceButton = document.querySelector("#translateReplaceButton");
 const translateDownloadButton = document.querySelector("#translateDownloadButton");
 const translateToggleButton = document.querySelector("#translateToggleButton");
+const markdownProfile = document.querySelector("#markdownProfile");
 
 let fileHandle = null;
 let dirty = false;
@@ -42,9 +44,9 @@ let deferredInstallPrompt = null;
 
 init();
 
-function init() {
+async function init() {
   applyTheme(localStorage.getItem(THEME_KEY) || "light");
-  restoreDraft();
+  await restoreDraft();
   render();
   wireEvents();
   updateBrowserCapabilities();
@@ -68,6 +70,7 @@ function wireEvents() {
   document.querySelector("#saveButton").addEventListener("click", saveDocument);
   document.querySelector("#downloadButton").addEventListener("click", downloadMarkdown);
   document.querySelector("#htmlButton").addEventListener("click", downloadHtml);
+  document.querySelector("#helpButton").addEventListener("click", openReadmeWindow);
   document.querySelector("#themeButton").addEventListener("click", toggleTheme);
   translateToggleButton.addEventListener("click", toggleTranslationPanel);
   translateReplaceButton.addEventListener("click", () => translateDocument("replace"));
@@ -76,6 +79,13 @@ function wireEvents() {
   fileInput.addEventListener("change", handleFileInput);
   sourceLanguage.addEventListener("change", updateTranslationAvailability);
   targetLanguage.addEventListener("change", updateTranslationAvailability);
+  markdownProfile.addEventListener("change", updateMarkdownProfile);
+  document.querySelectorAll("[data-command]").forEach((button) => {
+    button.addEventListener("click", () => applyMarkdownCommand(button.dataset.command));
+  });
+  document.querySelectorAll("[data-note-command]").forEach((button) => {
+    button.addEventListener("click", () => applyNoteCommand(button.dataset.noteCommand));
+  });
 
   modeButtons.forEach((button) => {
     button.addEventListener("click", () => setMode(button.dataset.mode));
@@ -98,11 +108,29 @@ function wireEvents() {
   document.addEventListener("drop", handleDrop);
 }
 
-function restoreDraft() {
+async function restoreDraft() {
   const stored = safeJsonParse(localStorage.getItem(STORAGE_KEY));
-  titleInput.value = stored?.title || "untitled.md";
-  editor.value = stored?.content || SAMPLE_MARKDOWN;
-  setDirty(Boolean(stored?.dirty));
+  if (stored?.content) {
+    titleInput.value = stored.title || "untitled.md";
+    editor.value = stored.content;
+    setDirty(Boolean(stored.dirty));
+    return;
+  }
+
+  try {
+    const response = await fetch(README_URL, { cache: "no-cache" });
+    if (!response.ok) {
+      throw new Error("README unavailable");
+    }
+    titleInput.value = "README.md";
+    editor.value = await response.text();
+    fileStatus.textContent = "README を表示中";
+    setDirty(false);
+  } catch {
+    titleInput.value = "untitled.md";
+    editor.value = SAMPLE_MARKDOWN;
+    setDirty(false);
+  }
 }
 
 function persistDraft() {
@@ -251,6 +279,13 @@ ${body}
   downloadBlob(new Blob([html], { type: "text/html;charset=utf-8" }), fileName);
 }
 
+function openReadmeWindow() {
+  const opened = window.open(README_URL, "md-atelier-readme", "noopener,noreferrer");
+  if (!opened) {
+    showTransientStatus("README を開けませんでした");
+  }
+}
+
 async function handleFileInput(event) {
   const [file] = event.target.files;
   if (file) {
@@ -356,17 +391,119 @@ function handleShortcuts(event) {
     event.preventDefault();
     wrapSelection("*", "*");
   }
+  if (key === "k") {
+    event.preventDefault();
+    applyMarkdownCommand("link");
+  }
 }
 
-function wrapSelection(before, after) {
+function applyMarkdownCommand(command) {
+  const commands = {
+    bold: () => wrapSelection("**", "**", "太字"),
+    italic: () => wrapSelection("*", "*", "斜体"),
+    strike: () => wrapSelection("~~", "~~", "取り消し"),
+    "inline-code": () => wrapSelection("`", "`", "code"),
+    link: () => wrapSelection("[", "](https://example.com)", "リンクテキスト"),
+    image: () => insertBlock("![画像の説明](https://example.com/image.png)"),
+    h1: () => applyLinePrefix("# "),
+    h2: () => applyLinePrefix("## "),
+    h3: () => applyLinePrefix("### "),
+    "bullet-list": () => applyLinePrefix("- "),
+    "number-list": () => applyOrderedList(),
+    "check-list": () => applyLinePrefix("- [ ] "),
+    quote: () => applyLinePrefix("> "),
+    "code-block": () => wrapBlock("```\n", "\n```", "ここにコード"),
+    table: () => insertBlock("| 項目 | 内容 |\n| --- | --- |\n|  |  |"),
+    hr: () => insertBlock("\n---\n"),
+  };
+
+  commands[command]?.();
+}
+
+function applyNoteCommand(command) {
+  const commands = {
+    "note-large-heading": () => applyLinePrefix("## "),
+    "note-small-heading": () => applyLinePrefix("### "),
+    "note-bold": () => wrapSelection("__", "__ ", "太字"),
+    "note-quote": () => applyLinePrefix("> "),
+    "note-embed": () => insertBlock("https://note.com/"),
+    "note-math-inline": () => wrapSelection("$${", "}$$", "y = x^2"),
+    "note-math-block": () => insertBlock("$$\ny = x^2\n$$"),
+  };
+
+  markdownProfile.value = "note";
+  updateMarkdownProfile();
+  commands[command]?.();
+}
+
+function wrapSelection(before, after, placeholder = "") {
   const start = editor.selectionStart;
   const end = editor.selectionEnd;
-  const selected = editor.value.slice(start, end);
+  const selected = editor.value.slice(start, end) || placeholder;
+  const replacement = `${before}${selected}${after}`;
+  editor.setRangeText(replacement, start, end, "select");
+  editor.selectionStart = start + before.length;
+  editor.selectionEnd = start + before.length + selected.length;
+  markEditorChanged();
+}
+
+function wrapBlock(before, after, placeholder = "") {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const selected = editor.value.slice(start, end) || placeholder;
   editor.setRangeText(`${before}${selected}${after}`, start, end, "select");
+  markEditorChanged();
+}
+
+function insertBlock(markdown) {
+  const start = editor.selectionStart;
+  const prefix = start > 0 && !editor.value.slice(0, start).endsWith("\n") ? "\n" : "";
+  const suffix = editor.value.slice(start).startsWith("\n") ? "" : "\n";
+  editor.setRangeText(`${prefix}${markdown}${suffix}`, start, editor.selectionEnd, "end");
+  markEditorChanged();
+}
+
+function applyLinePrefix(prefix) {
+  replaceSelectedLines((line) => {
+    if (!line.trim()) {
+      return `${prefix}`;
+    }
+    return `${prefix}${line.replace(/^\s*(#{1,6}|[-*+]|\d+[.)]|>\s?|-\s+\[[ xX]\])\s+/, "")}`;
+  });
+}
+
+function applyOrderedList() {
+  let count = 0;
+  replaceSelectedLines((line) => {
+    count += 1;
+    return `${count}. ${line.replace(/^\s*(#{1,6}|[-*+]|\d+[.)]|>\s?|-\s+\[[ xX]\])\s+/, "") || "項目"}`;
+  });
+}
+
+function replaceSelectedLines(transform) {
+  const value = editor.value;
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+  const nextBreak = value.indexOf("\n", end);
+  const lineEnd = nextBreak === -1 ? value.length : nextBreak;
+  const selected = value.slice(lineStart, lineEnd);
+  const replacement = selected.split("\n").map(transform).join("\n");
+  editor.setRangeText(replacement, lineStart, lineEnd, "select");
+  markEditorChanged();
+}
+
+function markEditorChanged() {
   setDirty(true);
   persistDraft();
   render();
   editor.focus();
+}
+
+function updateMarkdownProfile() {
+  document.querySelectorAll("[data-note-command]").forEach((button) => {
+    button.classList.toggle("is-active", markdownProfile.value === "note");
+  });
 }
 
 function toggleTranslationPanel() {
@@ -584,7 +721,7 @@ async function translateInlineText(text, translator) {
   }
 
   const placeholders = [];
-  const protectedText = text.replace(/(`[^`]+`|!\[[^\]]*]\([^)]+\)|\[[^\]]+]\([^)]+\)|https?:\/\/\S+)/g, (match) => {
+  const protectedText = text.replace(/(\$\$\{[^}]+}\$\$|`[^`]+`|!\[[^\]]*]\([^)]+\)|\[[^\]]+]\([^)]+\)|https?:\/\/\S+)/g, (match) => {
     const id = placeholders.length;
     placeholders.push(match);
     return `[[MD_ATELIER_${id}]]`;
@@ -685,6 +822,18 @@ function markdownToHtml(markdown) {
       continue;
     }
 
+    if (/^\s*\$\$\s*$/.test(line)) {
+      const formula = [];
+      index += 1;
+      while (index < lines.length && !/^\s*\$\$\s*$/.test(lines[index])) {
+        formula.push(lines[index]);
+        index += 1;
+      }
+      index += index < lines.length ? 1 : 0;
+      html.push(`<pre class="math-block"><code>${escapeHtml(formula.join("\n"))}</code></pre>`);
+      continue;
+    }
+
     const heading = line.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/);
     if (heading) {
       const level = heading[1].length;
@@ -738,6 +887,7 @@ function isBlockStart(lines, index) {
   const line = lines[index];
   return (
     /^\s*(```+|~~~+)/.test(line) ||
+    /^\s*\$\$\s*$/.test(line) ||
     /^(#{1,6})\s+/.test(line) ||
     /^\s*([-*_])(?:\s*\1){2,}\s*$/.test(line) ||
     /^\s{0,3}>\s?/.test(line) ||
@@ -815,6 +965,12 @@ function inlineMarkdown(text) {
   let value = text.replace(/`([^`]+)`/g, (_match, code) => {
     const id = placeholders.length;
     placeholders.push(`<code>${escapeHtml(code)}</code>`);
+    return `\u0000${id}\u0000`;
+  });
+
+  value = value.replace(/\$\$\{([^}]+)}\$\$/g, (_match, formula) => {
+    const id = placeholders.length;
+    placeholders.push(`<span class="math-inline">${escapeHtml(formula)}</span>`);
     return `\u0000${id}\u0000`;
   });
 

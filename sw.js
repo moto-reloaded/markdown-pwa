@@ -1,10 +1,12 @@
-const CACHE_NAME = "md-atelier-v2";
+const CACHE_NAME = "md-atelier-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./manifest.webmanifest",
+  "./.nojekyll",
+  "./README.md",
   "./assets/icon.svg",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
