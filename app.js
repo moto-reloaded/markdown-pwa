@@ -1,7 +1,7 @@
 const STORAGE_KEY = "md-atelier-draft-v1";
 const THEME_KEY = "md-atelier-theme";
 const README_URL = "./README.md";
-const APP_VERSION = "1.0.1";
+const APP_VERSION = "1.0.2";
 const SAMPLE_MARKDOWN = `# Untitled
 
 小さく始められる Markdown エディタです。
@@ -531,11 +531,17 @@ function initializeResponsiveMode() {
 }
 
 function toggleSpeechPanel() {
-  speechPanel.hidden = !speechPanel.hidden;
-  speechToggleButton.classList.toggle("is-active", !speechPanel.hidden);
-  if (!speechPanel.hidden) {
+  const opening = speechPanel.hidden;
+  speechPanel.hidden = !opening;
+  speechToggleButton.classList.toggle("is-active", opening);
+
+  if (opening) {
     updateSpeechAvailability();
-  } else {
+    startSpeechInput();
+    return;
+  }
+
+  if (speechListening) {
     stopSpeechInput();
   }
 }
@@ -574,6 +580,7 @@ function startSpeechInput() {
   speechRecognition.lang = speechLanguage.value;
   speechRecognition.continuous = true;
   speechRecognition.interimResults = false;
+  speechRecognition.maxAlternatives = 1;
 
   speechRecognition.addEventListener("start", () => {
     speechListening = true;
@@ -582,6 +589,9 @@ function startSpeechInput() {
   });
 
   speechRecognition.addEventListener("result", handleSpeechResult);
+  speechRecognition.addEventListener("nomatch", () => {
+    speechStatus.textContent = "音声を認識できませんでした";
+  });
   speechRecognition.addEventListener("error", handleSpeechError);
   speechRecognition.addEventListener("end", () => {
     speechListening = false;

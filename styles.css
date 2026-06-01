@@ -91,6 +91,25 @@ button {
   display: block;
 }
 
+.brand-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.05;
+}
+
+.brand-name {
+  white-space: nowrap;
+}
+
+.brand-version {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .toolbar,
 .topbar-end {
   display: inline-flex;
@@ -650,8 +669,12 @@ button {
     padding: 10px;
   }
 
-  .brand span {
+  .brand-name {
     display: none;
+  }
+
+  .brand {
+    min-width: 86px;
   }
 
   .mode-button {

@@ -6,7 +6,8 @@ test("loads README and compact two-row toolbar", async ({ page }) => {
   await expect(page.locator("#documentTitle")).toHaveValue("README.md");
   await expect(page.locator("#editor")).toHaveValue(/## 入手先/);
   await expect(page.locator("#helpButton")).toHaveAttribute("aria-label", "README を開く");
-  await expect(page.locator("#versionLabel")).toHaveText("v1.0.1");
+  await expect(page.locator("#versionLabel")).toHaveText("v1.0.2");
+  await expect(page.locator(".brand")).toContainText("Version v1.0.2");
   await expect(page.locator("#speechPanel")).toBeHidden();
 
   const toolbarBox = await page.locator(".format-toolbar").boundingBox();
@@ -91,7 +92,6 @@ test("speech input inserts recognized text when supported", async ({ page }) => 
 
   await page.locator("#speechToggleButton").click();
   await expect(page.locator("#speechPanel")).toBeVisible();
-  await page.locator("#speechStartButton").click();
 
   await expect(page.locator("#editor")).toHaveValue("# Voice\n\n音声テスト");
   await expect(page.locator("#saveState")).toHaveText("未保存");
