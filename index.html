@@ -16,7 +16,7 @@
           <img src="./assets/icon.svg" alt="" width="32" height="32">
           <span class="brand-copy">
             <span class="brand-name">MD Atelier</span>
-            <span class="brand-version">Version <span id="versionLabel">v1.0.2</span></span>
+            <span class="brand-version">Version <span id="versionLabel">v1.0.4</span></span>
           </span>
         </div>
 
@@ -137,8 +137,12 @@
           </select>
           <button class="text-button" id="speechStartButton" type="button">開始</button>
           <button class="text-button" id="speechStopButton" type="button" disabled>停止</button>
+          <button class="text-button" id="nativeSpeechHelpButton" type="button">OS入力</button>
         </div>
-        <span class="speech-status" id="speechStatus">待機中</span>
+        <div class="speech-feedback">
+          <span class="speech-status" id="speechStatus">待機中</span>
+          <span class="speech-hint" id="speechHint">入らない場合は、編集欄を選んで Windows: Win + H / Mac: Fn を2回</span>
+        </div>
       </section>
 
       <main class="workspace split-mode" id="workspace">

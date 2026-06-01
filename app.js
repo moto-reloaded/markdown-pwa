@@ -1,7 +1,7 @@
 const STORAGE_KEY = "md-atelier-draft-v1";
 const THEME_KEY = "md-atelier-theme";
 const README_URL = "./README.md";
-const APP_VERSION = "1.0.2";
+const APP_VERSION = "1.0.4";
 const SAMPLE_MARKDOWN = `# Untitled
 
 小さく始められる Markdown エディタです。
@@ -42,7 +42,9 @@ const speechPanel = document.querySelector("#speechPanel");
 const speechLanguage = document.querySelector("#speechLanguage");
 const speechStartButton = document.querySelector("#speechStartButton");
 const speechStopButton = document.querySelector("#speechStopButton");
+const nativeSpeechHelpButton = document.querySelector("#nativeSpeechHelpButton");
 const speechStatus = document.querySelector("#speechStatus");
+const speechHint = document.querySelector("#speechHint");
 const markdownProfile = document.querySelector("#markdownProfile");
 const versionLabel = document.querySelector("#versionLabel");
 
@@ -91,6 +93,7 @@ function wireEvents() {
   speechToggleButton.addEventListener("click", toggleSpeechPanel);
   speechStartButton.addEventListener("click", startSpeechInput);
   speechStopButton.addEventListener("click", stopSpeechInput);
+  nativeSpeechHelpButton.addEventListener("click", focusEditorForNativeSpeech);
   installButton.addEventListener("click", installApp);
   fileInput.addEventListener("change", handleFileInput);
   sourceLanguage.addEventListener("change", updateTranslationAvailability);
@@ -578,13 +581,14 @@ function startSpeechInput() {
   stopSpeechInput();
   speechRecognition = new SpeechRecognition();
   speechRecognition.lang = speechLanguage.value;
-  speechRecognition.continuous = true;
-  speechRecognition.interimResults = false;
+  speechRecognition.continuous = false;
+  speechRecognition.interimResults = true;
   speechRecognition.maxAlternatives = 1;
 
   speechRecognition.addEventListener("start", () => {
     speechListening = true;
-    speechStatus.textContent = "音声入力中...";
+    speechStatus.textContent = "音声入力中... 話してください";
+    speechHint.textContent = "Chrome の認識結果が返ると、カーソル位置に入力します";
     updateSpeechAvailability();
   });
 
@@ -596,7 +600,7 @@ function startSpeechInput() {
   speechRecognition.addEventListener("end", () => {
     speechListening = false;
     speechRecognition = null;
-    if (speechStatus.textContent === "音声入力中...") {
+    if (speechStatus.textContent.startsWith("音声入力中")) {
       speechStatus.textContent = "停止しました";
     }
     updateSpeechAvailability();
@@ -630,20 +634,32 @@ function stopSpeechInput() {
 }
 
 function handleSpeechResult(event) {
-  let transcript = "";
+  let finalTranscript = "";
+  let interimTranscript = "";
   for (let index = event.resultIndex; index < event.results.length; index += 1) {
     const result = event.results[index];
-    if (result.isFinal && result[0]?.transcript) {
-      transcript += result[0].transcript;
+    const transcript = result[0]?.transcript || "";
+    if (!transcript) {
+      continue;
+    }
+    if (result.isFinal) {
+      finalTranscript += transcript;
+    } else {
+      interimTranscript += transcript;
     }
   }
 
-  if (!transcript.trim()) {
+  if (interimTranscript.trim()) {
+    speechStatus.textContent = `認識中: ${interimTranscript.trim()}`;
+  }
+
+  if (!finalTranscript.trim()) {
     return;
   }
 
-  insertSpeechText(transcript);
+  insertSpeechText(finalTranscript);
   speechStatus.textContent = "入力しました";
+  speechHint.textContent = "続けて入力する場合は、もう一度 開始 を押してください";
 }
 
 function handleSpeechError(event) {
@@ -664,12 +680,19 @@ function getSpeechErrorMessage(error) {
     return "マイクの利用が許可されていません";
   }
   if (error === "no-speech") {
-    return "音声を認識できませんでした";
+    speechHint.textContent = "編集欄を選んで Windows: Win + H も使えます";
+    return "音声を認識できませんでした。もう一度 開始 を押してください";
   }
   if (error === "audio-capture") {
     return "マイクを利用できません";
   }
   return "音声入力に失敗しました";
+}
+
+function focusEditorForNativeSpeech() {
+  editor.focus();
+  speechStatus.textContent = "編集欄にフォーカスしました";
+  speechHint.textContent = "Windows は Win + H、Mac は Fn を2回でOS標準の音声入力を使えます";
 }
 
 function toggleTranslationPanel() {
