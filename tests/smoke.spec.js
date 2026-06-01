@@ -6,8 +6,8 @@ test("loads README and compact two-row toolbar", async ({ page }) => {
   await expect(page.locator("#documentTitle")).toHaveValue("README.md");
   await expect(page.locator("#editor")).toHaveValue(/## 入手先/);
   await expect(page.locator("#helpButton")).toHaveAttribute("aria-label", "README を開く");
-  await expect(page.locator("#versionLabel")).toHaveText("v1.0.5");
-  await expect(page.locator(".brand")).toContainText("Version v1.0.5");
+  await expect(page.locator("#versionLabel")).toHaveText("v1.0.6");
+  await expect(page.locator(".brand")).toContainText("Version v1.0.6");
   await expect(page.locator("#speechPanel")).toBeHidden();
 
   const toolbarBox = await page.locator(".format-toolbar").boundingBox();
@@ -68,4 +68,36 @@ test("speech button focuses editor and explains OS dictation", async ({ page }) 
   await expect(page.locator("#editor")).toHaveValue("# Voice\n\n");
   await expect(page.locator("#speechStatus")).toHaveText("編集欄にフォーカスしました");
   await expect(page.locator("#speechHint")).toContainText("Win + H");
+});
+
+test("opens markdown file passed by installed PWA launch", async ({ page }) => {
+  await page.addInitScript(() => {
+    const handle = {
+      name: "opened.md",
+      async getFile() {
+        return new File(["# Opened\n\nFrom double click"], "opened.md", { type: "text/markdown" });
+      },
+      async createWritable() {
+        return {
+          async write() {},
+          async close() {},
+        };
+      },
+    };
+
+    Object.defineProperty(window, "launchQueue", {
+      configurable: true,
+      value: {
+      setConsumer(callback) {
+        setTimeout(() => callback({ files: [handle] }), 0);
+      },
+      },
+    });
+  });
+
+  await page.goto("/");
+
+  await expect(page.locator("#documentTitle")).toHaveValue("opened.md");
+  await expect(page.locator("#editor")).toHaveValue("# Opened\n\nFrom double click");
+  await expect(page.locator("#fileStatus")).toHaveText("ダブルクリックで開きました");
 });

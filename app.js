@@ -1,7 +1,7 @@
 const STORAGE_KEY = "md-atelier-draft-v1";
 const THEME_KEY = "md-atelier-theme";
 const README_URL = "./README.md";
-const APP_VERSION = "1.0.5";
+const APP_VERSION = "1.0.6";
 const SAMPLE_MARKDOWN = `# Untitled
 
 小さく始められる Markdown エディタです。
@@ -48,19 +48,46 @@ const versionLabel = document.querySelector("#versionLabel");
 let fileHandle = null;
 let dirty = false;
 let deferredInstallPrompt = null;
+let launchFileOpened = false;
 
 init();
 
 async function init() {
   versionLabel.textContent = `v${APP_VERSION}`;
   applyTheme(localStorage.getItem(THEME_KEY) || "light");
-  await restoreDraft();
+  setupLaunchQueue();
+  await waitForLaunchFile();
+  if (!launchFileOpened) {
+    await restoreDraft();
+  }
   render();
   wireEvents();
   updateMarkdownProfile();
   initializeResponsiveMode();
   updateBrowserCapabilities();
   registerServiceWorker();
+}
+
+function waitForLaunchFile() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+function setupLaunchQueue() {
+  if (!("launchQueue" in window)) {
+    return;
+  }
+
+  window.launchQueue.setConsumer(async (launchParams) => {
+    const [handle] = launchParams.files || [];
+    if (!handle) {
+      return;
+    }
+
+    launchFileOpened = true;
+    await loadFileHandle(handle);
+  });
 }
 
 function wireEvents() {
@@ -122,6 +149,10 @@ function wireEvents() {
 }
 
 async function restoreDraft() {
+  if (launchFileOpened) {
+    return;
+  }
+
   const stored = safeJsonParse(localStorage.getItem(STORAGE_KEY));
   if (stored?.content) {
     titleInput.value = stored.title || "untitled.md";
@@ -305,6 +336,16 @@ async function handleFileInput(event) {
     await loadFile(file, null);
   }
   event.target.value = "";
+}
+
+async function loadFileHandle(handle) {
+  try {
+    const file = await handle.getFile();
+    await loadFile(file, handle);
+    fileStatus.textContent = canWriteHandle(handle) ? "ダブルクリックで開きました" : "ファイルを開きました";
+  } catch {
+    showTransientStatus("ファイルを開けませんでした");
+  }
 }
 
 async function loadFile(file, handle) {
