@@ -39,7 +39,7 @@
           <button class="icon-button" id="translateToggleButton" type="button" title="翻訳" aria-label="翻訳">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 8 6 6"></path><path d="m4 14 6-6 2-3"></path><path d="M2 5h12"></path><path d="M7 2h1"></path><path d="m22 22-5-10-5 10"></path><path d="M14 18h6"></path></svg>
           </button>
-          <button class="icon-button" id="speechToggleButton" type="button" title="音声入力" aria-label="音声入力" hidden>
+          <button class="icon-button" id="speechToggleButton" type="button" title="OS音声入力" aria-label="OS音声入力">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z"></path><path d="M19 11a7 7 0 0 1-14 0"></path><path d="M12 18v3"></path><path d="M8 21h8"></path></svg>
           </button>
         </nav>
@@ -130,18 +130,12 @@
 
       <section class="speech-panel" id="speechPanel" aria-label="Voice input" hidden>
         <div class="speech-controls">
-          <label class="field-label" for="speechLanguage">音声</label>
-          <select id="speechLanguage" class="select-input">
-            <option value="ja-JP">日本語</option>
-            <option value="en-US">English</option>
-          </select>
-          <button class="text-button" id="speechStartButton" type="button">開始</button>
-          <button class="text-button" id="speechStopButton" type="button" disabled>停止</button>
-          <button class="text-button" id="nativeSpeechHelpButton" type="button">OS入力</button>
+          <span class="field-label">音声入力</span>
+          <button class="text-button" id="nativeSpeechHelpButton" type="button">編集欄を選択</button>
         </div>
         <div class="speech-feedback">
-          <span class="speech-status" id="speechStatus">待機中</span>
-          <span class="speech-hint" id="speechHint">入らない場合は、編集欄を選んで Windows: Win + H / Mac: Fn を2回</span>
+          <span class="speech-status" id="speechStatus">OS標準の音声入力を使います</span>
+          <span class="speech-hint" id="speechHint">Windows: Win + H / Mac: Fn を2回</span>
         </div>
       </section>
 
